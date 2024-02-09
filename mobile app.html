@@ -1,0 +1,167 @@
+<!doctype html>
+<html>
+    <head>
+        <!-- Metadata -->
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <title>Add to Cart</title>
+        <!-- CSS Styles -->
+        <style>
+            /* Styles for HTML and Body */
+            html, body {
+                margin: 0;
+                padding: 0;
+                font-family: 'Rubik', sans-serif;
+                background-color: #EEF0F4;
+            }
+
+            /* Styles for Container */
+            .container {
+                display: flex;
+                flex-direction: column;
+                max-width: 320px;
+                margin: 30px auto;
+            }
+
+            /* Styles for Images */
+            img {
+                width: 150px;
+                margin: 0 auto;
+            }
+
+            /* Styles for Input */
+            input {
+                color: #432000;
+                background-color: #DCE1EB;
+                border: 0;
+                padding: 15px;
+                border-radius: 8px;
+                font-size: 20px;
+                text-align: center;
+                font-family: 'Rubik', sans-serif;
+                margin: 10px 0;
+            }
+
+            /* Styles for Button */
+            button {
+                color: #FDFDFD;
+                background-color: #AC485A;
+                border: 0;
+                padding: 15px;
+                border-radius: 8px;
+                font-size: 20px;
+                text-align: center;
+                font-family: 'Rubik', sans-serif;
+            }
+
+            /* Styles for Unordered List */
+            ul {
+                list-style-type: none;
+                padding: 0;
+                display: flex;
+                flex-wrap: wrap;
+                gap: 10px;
+            }
+
+            /* Styles for List Items */
+            ul li {
+                font-size: 20px;
+                background-color: #FFFDF7;
+                padding: 15px;
+                border-radius: 80px;
+                flex-grow: 1;
+                text-align: center;
+                box-shadow: 0px 1px 4px rgba(0, 0, 0, 0.2)
+            }
+        </style>
+    </head>
+    <body>
+        <div class="container">
+            <!-- Image -->
+            <img src="assets/cat.png">
+            <!-- Input Field -->
+            <input type="text" id="input-field" placeholder="Bread">
+            <!-- Add Button -->
+            <button id="add-button">Add to cart</button>
+            <!-- Shopping List -->
+            <ul id="shopping-list">
+            </ul>
+        </div>
+        <!-- JavaScript Code -->
+        <script type="module">
+            // Import Firebase functions
+            
+
+            import { initializeApp } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-app.js"
+            import { getDatabase, ref, push, onValue, remove } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-database.js"
+
+            // Firebase settings
+            const appSettings = {
+                databaseURL: "https://mobile-app-database-306a2-default-rtdb.firebaseio.com/"
+            }
+
+            // Initialize Firebase app
+            const app = initializeApp(appSettings)
+            // Get a reference to the database
+            const database = getDatabase(app)
+            // Reference to the "shoppingList" node in the database
+            const shoppingListInDB = ref(database, "shoppingList")
+
+            // Get DOM elements
+            const inputFieldEl = document.getElementById("input-field")
+            const addButtonEl = document.getElementById("add-button")
+            const shoppingListEl = document.getElementById("shopping-list")
+
+            // Event listener for the Add button
+            addButtonEl.addEventListener("click", function() {
+                let inputValue = inputFieldEl.value
+                // Push input value to the shopping list in the database
+                push(shoppingListInDB, inputValue)
+                // Clear input field
+                clearInputFieldEl()
+            })
+
+            // Database listener for changes in shopping list
+            onValue(shoppingListInDB, function(snapshot) {
+                // Convert snapshot data to an array
+                let itemsArray = Object.entries(snapshot.val())
+                // Clear the shopping list
+                clearShoppingListEl()
+                // Iterate through the items and append them to the shopping list
+                for (let i = 0; i < itemsArray.length; i++) {
+                    let currentItem = itemsArray[i]
+                    let currentItemID = currentItem[0]
+                    let currentItemValue = currentItem[1]
+                    appendItemToShoppingListEl(currentItem)
+                }
+            })
+
+            // Function to clear the shopping list
+            function clearShoppingListEl() {
+                shoppingListEl.innerHTML = ""
+            }
+
+            // Function to clear the input field
+            function clearInputFieldEl() {
+                inputFieldEl.value = ""
+            }
+
+            // Function to append item to the shopping list
+            function appendItemToShoppingListEl(item) {
+                let itemID = item[0]
+                let itemValue = item[1]
+                // Create a new list item element
+                let newEl = document.createElement("li")
+                // Set its text content to the item value
+                newEl.textContent = itemValue
+                // Add click event listener to remove item from database on click
+                newEl.addEventListener("click", function() {
+                    let exactLocationOfItemInDB = ref(database, `shoppingList/${itemID}`)
+                    remove(exactLocationOfItemInDB)
+                })
+                // Append the new list item to the shopping list
+                shoppingListEl.append(newEl)
+            }
+        </script>
+    </body>
+</html>
